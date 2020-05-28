@@ -1,0 +1,282 @@
+@startuml
+
+hide empty members
+
+enum PlayerNumber
+enum SwingPower
+enum SwingOrientation
+enum CollectionType
+
+PlayerNumber : Top
+PlayerNumber : Bottom
+
+SwingPower : Weak
+SwingPower : Normal
+SwingPower : Charged
+SwingPower : All
+
+SwingOrientation : Forward
+SwingOrientation : Left
+SwingOrientation : Right
+
+PlayerStatus : Regular
+PlayerStatus : Swinging
+PlayerStatus : Charging
+PlayerStatus : Dashing
+
+CollectionType : Surface
+CollectionType : Ball
+CollectionType : Exploder
+CollectionType : Dash
+CollectionType : Other
+
+' Effect Stuff
+
+class EffectCollection << (S, Violet) ScriptableObject >>
+class EffectStructure << (S, Green) Struct >>
+class VisualEffect << (S, Violet) ScriptableObject >>
+
+EffectCollection : + CollectionType type
+EffectCollection : + List<EffectStructure> effectStructures
+EffectCollection : + VisualEffect Get()
+
+EffectStructure : + VisualEffect effect
+EffectStructure : + string name
+
+VisualEffect : + Vector3 localPosition
+VisualEffect : + Quaternion localRotation
+VisualEffect : + Vector3 localScale
+VisualEffect : + RuntimeAnimatorController controller
+VisualEffect : + AudioClip audio
+VisualEffect : + void Play()
+VisualEffect : + void LoadFromScriptableObject()
+VisualEffect : + void DestroyThis()
+
+' End Effect Stuff
+
+' Ball Stuff
+
+class BallSpawner << (M, Cyan) MonoBehaviour >>
+class BallType << (S, Violet) ScriptableObject >>
+class BallPhysics << (M, Cyan) MonoBehaviour >>
+class ExplodeSettings << (S, Violet) ScriptableObject >>
+class Exploder << (M, Cyan) MonoBehaviour >>
+
+BallSpawner : + float spawnTime
+BallSpawner : + Transform topSpawnPosition
+BallSpawner : + Transform bottomSpawnPosition
+BallSpawner : + Vector3 spawnVelocity
+BallSpawner : + GameObject regularBallPrefab
+BallSpawner : + GameObject killerBallPrefab
+BallSpawner : + PlayerNumber playerSpawn
+BallSpawner : + void SpawnBall()
+BallSpawner : + Action BallSpawned
+BallSpawner : + GameObject GetCurrentBall()
+BallSpawner : - IEnumerator WaitForBallSpawn()
+BallSpawner : - GameObject currentBall
+BallSpawner : - bool canSpawn
+BallSpawner : - PlayerNumber lastPlayerDirectionSpawn
+BallSpawner : - void DestroyCurrentBall()
+
+BallType : + float weight
+BallType : + float radius
+BallType : + float movementSpeed
+BallType : + EffectCollection effectCollection
+BallType : + int bouncesUntilRespawn
+
+BallPhysics : + Vector3 velocity
+BallPhysics : + int currentDamage
+BallPhysics : + bool canDamage
+BallPhysics : + BallType ballType
+BallPhysics : + Vector3 Bounce()
+BallPhysics : + Vector3 Strike()
+BallPhysics : + int ChangeDamage()
+BallPhysics : + Action Bounce
+BallPhysics : + Action Swing
+BallPhysics : - List<Vector3> collisionPoints
+BallPhysics : - int currentBounces
+BallPhysics : - bool canSwing
+BallPhysics : - TrailRenderer trailRenderer
+BallPhysics : - IEnumerator CustomUpdate()
+BallPhysics : - IEnumerator WaitSwing()
+
+ExplodeSettings : + EffectCollection effectCollection
+ExplodeSettings : + float explodeTime
+
+Exploder : + ExplodeSettings settings
+Exploder : + float currentTime
+Exploder : + Action Exploded
+Exploder : - IEnumerator ExplosionCoroutine()
+Exploder : - void Explode()
+
+' End Ball Stuff
+
+' Player Stuff
+
+class PlayerController << (M, Cyan) MonoBehaviour >>
+class DashType << (S, Violet) ScriptableObject >>
+class PlayerType << (S, Violet) ScriptableObject >>
+class SwingDirections << (S, Violet) ScriptableObject >>
+class SwingType << (S, Violet) ScriptableObject >>
+
+enum PlayerStatus
+
+PlayerController : + SwingPower currentCharge
+PlayerController : + SwingOrientation orientation
+PlayerController : + PlayerType playerType
+PlayerController : - PlayerStatus status
+PlayerController : - Animator animator
+PlayerController : - Vector3 input
+PlayerController : - Rigidbody rigidbody
+PlayerController : - ParticleSystem particleSystem
+PlayerController : - ParticleSystemRenderer particleSystemRenderer
+PlayerController : - GameObject dashSwingCollider
+PlayerController : - float currentSpeed
+PlayerController : - float currentSwingStrength
+PlayerController : - Vector3 currentSwingDirection
+PlayerController : - string playerInputSuffix
+PlayerController : - SpriteRenderer sprite
+PlayerController : + void Move()
+PlayerController : + void Dash()
+PlayerController : + void Swing()
+PlayerController : + void ChangeSpeed()
+PlayerController : + void ChangeStrength()
+PlayerController : + void ChangeDirection()
+PlayerController : + Vector3 ReadMovement()
+PlayerController : - void StopDashing()
+PlayerController : - Vector3 LandingPosition()
+PlayerController : - IEnumerator StartCharge()
+PlayerController : - void ReleaseCharge()
+PlayerController : - void HandleSwingDirection()
+
+DashType : + float duration
+DashType : + float distance
+DashType : + Ease ease
+DashType : + EffectCollection effectCollection
+
+PlayerType : + float speed
+PlayerType : + DashType dashType
+PlayerType : + SwingType swingType
+
+SwingDirections : + Vector3 left
+SwingDirections : + Vector3 straight
+SwingDirections : + Vector3 right
+
+SwingType : + float regularSwing
+SwingType : + float weakSwing
+SwingType : + float chargedSwing
+SwingType : + float chargingDivider
+SwingType : + float animatorChargingDivider
+' swingChargeSpeed was removed, change with Time.deltaTime
+SwingType : + float weakSwingTime
+SwingType : + float chargedSwingTime
+SwingType : + Color weakSwingColor
+SwingType : + Color chargedSwingColor
+SwingType : + SwingDirections swingDirections
+SwingType : + EffectCollection effectCollection
+
+' End Player Stuff
+
+' Surface Stuff
+
+class Surface << (M, Cyan) MonoBehaviour >>
+class StunnableSurface << (M, Cyan) MonoBehaviour >>
+class BackWall << (M, Cyan) MonoBehaviour >>
+class HitSettings << (S, Violet) ScriptableObject >>
+
+Surface : + EffectCollection effectCollection
+Surface : + void Hit()
+
+StunnableSurface : + HitSettings hitSettings
+StunnableSurface : + bool stunned
+StunnableSurface : + IEnumerator Stun()
+StunnableSurface : - Vector3 originalPosition
+StunnableSurface : - void ResetPosition()
+
+HitSettings : + float stunTime
+HitSettings : + float fadeDuration
+HitSettings : + float fadePercentage
+HitSettings : + bool shakeOnHit
+HitSettings : + float shakeDuration
+HitSettings : + float shakeStrength
+HitSettings : + int shakeVibrato
+
+BackWall : + MeshRenderer floorRenderer
+BackWall : + Color damageColor
+BackWall : + int maxHits
+BackWall : + Action Hit
+BackWall : - int currentHits
+BackWall : - Color startingColor
+
+' End Surface Stuff
+
+class GlobalSettings << (S, Purple) ScriptableObject Singleton >>
+class GizmoSettings << (S, Purple) ScriptableObject Singleton >>
+class GameManager << (M, Cyan) MonoBehaviour >>
+class LookAtComponent << (M, Cyan) MonoBehaviour >>
+class AudioManager << (M, Brown) MonoBehaviour Singleton >>
+
+AudioManager : + {static} AudioManager instance
+AudioManager : + float minRandomPitchShift
+AudioManager : + float maxRandomPitchShift
+' Add possibility for custom pitch shift
+AudioManager : + void PlaySound()
+AudioManager : - IEnumerator PlaySoundCoroutine()
+
+GlobalSettings : + {static} GlobalSettings instance;
+GlobalSettings : + float ballSwingTimer
+GlobalSettings : + bool ballConsidersVerticalWalls
+GlobalSettings : + LayerMask characterCollisionMask
+
+GizmoSettings : + Color ballGizmoColor
+GizmoSettings : + Sprite ballGizmoDrawCollisionImage
+
+GameManager : + BallSpawner ballSpawner
+GameManager : + bool canRestart
+GameManager : + int endScore
+GameManager : + int currentScore
+
+LookAtComponent : + GameObject lookAtObject
+LookAtComponent : - SpriteRenderer spriteRenderer
+
+' Connections
+
+CollectionType --* EffectCollection
+VisualEffect --* EffectStructure
+
+PlayerNumber --* BallSpawner
+
+BallType --* BallPhysics
+
+ExplodeSettings --* Exploder
+
+SwingPower --* PlayerController
+
+SwingOrientation --* PlayerController
+
+PlayerType --* PlayerController
+
+DashType --* PlayerType
+
+SwingType --* PlayerType
+
+SwingDirections --* SwingType
+
+EffectStructure --* EffectCollection
+
+EffectCollection --* DashType
+EffectCollection --* Surface
+EffectCollection --* ExplodeSettings
+EffectCollection --* BallType
+EffectCollection --* SwingType
+
+HitSettings --* StunnableSurface
+
+BallSpawner --* GameManager
+
+PlayerStatus --* PlayerController
+
+StunnableSurface --|> Surface
+Surface <|-- BackWall
+
+@enduml
